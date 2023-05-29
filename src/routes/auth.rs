@@ -26,6 +26,7 @@ pub async fn get_token(
 
     let claims = UserAuthClaimsModel {
         exp: jsonwebtoken::get_current_timestamp() + 3600,
+        _id: user._id.to_hex(),
         name: user.name,
         permissions: user.permissions
     };

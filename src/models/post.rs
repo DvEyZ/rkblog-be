@@ -13,12 +13,14 @@ pub struct PostWriteModel {
 
 #[derive(Serialize)]
 pub struct PostReadBriefModel {
+    pub _id :String,
     pub title :String,
     pub author :String
 }
 
 #[derive(Serialize)]
 pub struct PostReadFullModel {
+    pub _id :String,
     pub title :String,
     pub content :String,
     pub author :UserReadModel
@@ -69,6 +71,7 @@ impl PostStoreModel {
         let author = Self::query_author(user_ref, doc!{"_id": &self.author}).await?;
 
         Ok(PostReadBriefModel {
+            _id: self._id.to_hex(),
             title: self.title,
             author: author.name
         })
@@ -78,6 +81,7 @@ impl PostStoreModel {
         let author = Self::query_author(user_ref, doc!{"_id": &self.author}).await?;
 
         Ok(PostReadFullModel {
+            _id: self._id.to_hex(),
             title: self.title,
             content: self.content,
             author: author.to()

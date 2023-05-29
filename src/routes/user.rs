@@ -1,6 +1,6 @@
 use mongodb::{Collection, bson::doc};
 use rocket::{State, serde::json::Json, http::Status, futures::TryStreamExt, response::status::{Created}};
-use crate::{models::user::{UserStoreModel, UserReadModel, UserWriteModel, UserPermissionLevel}, 
+use crate::{models::{user::{UserStoreModel, UserReadModel, UserWriteModel, UserPermissionLevel}, post::PostStoreModel}, 
     errors::ApiError, 
     middlewares::auth::{AuthorizeToken, UserAuthorization, AdminPermissionAuthorization}};
 
@@ -96,6 +96,7 @@ pub async fn update<'a>(
 #[delete("/<name>")]
 pub async fn delete<'a>(
     db :&State<Collection<UserStoreModel>>, 
+    post_ref :&State<Collection<PostStoreModel>>,
     auth :AuthorizeToken<UserAuthorization>,
     name :&'a str
 ) -> UserResponse {
@@ -114,7 +115,12 @@ pub async fn delete<'a>(
     }
 
     match db.delete_one(doc! {"name": name}, None).await {
-        Ok(_ok) => return Ok(Json(user.to())),
+        Ok(_ok) => {
+            match post_ref.delete_many(doc!{"author": user._id}, None).await {
+                Ok(_ok) => return Ok(Json(user.to())),
+                Err(e) => return Err(ApiError { status: Status::InternalServerError, message: e.to_string() })
+            }
+        },
         Err(e) => return Err(ApiError { status: Status::InternalServerError, message: e.to_string() })
     }
 }

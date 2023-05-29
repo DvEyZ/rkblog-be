@@ -24,6 +24,7 @@ pub struct UserStoreModel {
 
 #[derive(Serialize)]
 pub struct UserReadModel {
+    pub _id :String,
     pub name :String,
     pub permissions :UserPermissionLevel
 }
@@ -42,6 +43,7 @@ pub struct UserAuthResponseModel {
 #[derive(Serialize,Deserialize)]
 pub struct UserAuthClaimsModel {
     pub exp :u64,
+    pub _id :String,
     pub name :String,
     pub permissions :UserPermissionLevel
 }
@@ -66,7 +68,8 @@ impl UserStoreModel {
     }
 
     pub fn to(self) -> UserReadModel {
-        UserReadModel { 
+        UserReadModel {
+            _id: self._id.to_hex(),
             name: self.name, 
             permissions: self.permissions
         }
