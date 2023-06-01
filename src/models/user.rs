@@ -11,7 +11,9 @@ pub enum UserPermissionLevel {
 pub struct UserWriteModel {
     pub name :String,
     pub password :String,
-    pub permissions :UserPermissionLevel
+    pub permissions :UserPermissionLevel,
+    
+    pub bio :String
 }
 
 #[derive(Serialize, Deserialize)]
@@ -19,14 +21,25 @@ pub struct UserStoreModel {
     pub _id :ObjectId,
     pub name :String,
     pub password_hash :String,
+    pub permissions :UserPermissionLevel,
+
+    pub bio :String
+}
+
+#[derive(Serialize)]
+pub struct  UserReadBriefModel {
+    pub _id :String,
+    pub name :String,
     pub permissions :UserPermissionLevel
 }
 
 #[derive(Serialize)]
-pub struct UserReadModel {
+pub struct UserReadFullModel {
     pub _id :String,
     pub name :String,
-    pub permissions :UserPermissionLevel
+    pub permissions :UserPermissionLevel,
+
+    pub bio :String
 }
 
 #[derive(Deserialize)]
@@ -45,7 +58,7 @@ pub struct UserAuthClaimsModel {
     pub exp :u64,
     pub _id :String,
     pub name :String,
-    pub permissions :UserPermissionLevel
+    pub permissions :UserPermissionLevel,
 }
 
 impl UserStoreModel {
@@ -54,7 +67,9 @@ impl UserStoreModel {
             _id: ObjectId::new(),
             name: user.name,
             password_hash: digest(user.password),
-            permissions: user.permissions
+            permissions: user.permissions,
+
+            bio: user.bio
         }
     }
 
@@ -63,15 +78,27 @@ impl UserStoreModel {
             _id: id,
             name: user.name,
             password_hash: digest(user.password),
-            permissions: user.permissions
+            permissions: user.permissions,
+
+            bio: user.bio
         }
     }
 
-    pub fn to(self) -> UserReadModel {
-        UserReadModel {
+    pub fn brief(self) -> UserReadBriefModel {
+        UserReadBriefModel {
+            _id: self._id.to_hex(),
+            name: self.name,
+            permissions: self.permissions
+        }
+    }
+
+    pub fn to(self) -> UserReadFullModel {
+        UserReadFullModel {
             _id: self._id.to_hex(),
             name: self.name, 
-            permissions: self.permissions
+            permissions: self.permissions,
+
+            bio: self.bio
         }
     }
 

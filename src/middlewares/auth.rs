@@ -67,7 +67,7 @@ impl<T :Authorize, 'r> FromRequest<'r> for AuthorizeToken<T> {
         };
         
         if &claim.exp < &jsonwebtoken::get_current_timestamp() {
-            return Outcome::Failure((Status::Forbidden, ()))
+            return Outcome::Failure((Status::Unauthorized, ()))
         }
 
         if !T::authorize(&claim) {

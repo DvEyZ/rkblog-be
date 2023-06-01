@@ -1,12 +1,12 @@
 use mongodb::{Collection, bson::doc};
 use rocket::{State, serde::json::Json, http::Status, futures::TryStreamExt, response::status::{Created}};
-use crate::{models::{user::{UserStoreModel, UserReadModel, UserWriteModel, UserPermissionLevel}, post::PostStoreModel}, 
+use crate::{models::{user::{UserStoreModel, UserReadFullModel, UserWriteModel, UserPermissionLevel, UserReadBriefModel}, post::PostStoreModel}, 
     errors::ApiError, 
     middlewares::auth::{AuthorizeToken, UserAuthorization, AdminPermissionAuthorization}};
 
-type UsersResponse = Result<Json<Vec<UserReadModel>>, ApiError>;
-type UserResponse = Result<Json<UserReadModel>, ApiError>;
-type UserResponseCreated = Result<Created<Json<UserReadModel>>, ApiError>;
+type UsersResponse = Result<Json<Vec<UserReadBriefModel>>, ApiError>;
+type UserResponse = Result<Json<UserReadFullModel>, ApiError>;
+type UserResponseCreated = Result<Created<Json<UserReadFullModel>>, ApiError>;
 
 #[get("/")]
 pub async fn list(
@@ -20,7 +20,7 @@ pub async fn list(
 
     let mut users = vec![];
     while let Ok(Some(user)) = results.try_next().await {
-        users.push(user.to())
+        users.push(user.brief())
     };
 
     Ok(Json(users))
@@ -97,7 +97,7 @@ pub async fn update<'a>(
 pub async fn delete<'a>(
     db :&State<Collection<UserStoreModel>>, 
     post_ref :&State<Collection<PostStoreModel>>,
-    auth :AuthorizeToken<UserAuthorization>,
+    _auth :AuthorizeToken<AdminPermissionAuthorization>,
     name :&'a str
 ) -> UserResponse {
     let user = match db.find_one(doc! {"name": name}, None).await {
@@ -108,14 +108,9 @@ pub async fn delete<'a>(
         Err(e) => return Err(ApiError { status: Status::InternalServerError, message: e.to_string() })
     };
 
-    if &user.name != &auth.claim.name {
-        if auth.claim.permissions != UserPermissionLevel::Admin {
-            return Err(ApiError { status: Status::Forbidden, message: "You don't have permission to delete this resource.".to_string() })
-        }
-    }
-
     match db.delete_one(doc! {"name": name}, None).await {
         Ok(_ok) => {
+            // Delete all posts of the deleted user
             match post_ref.delete_many(doc!{"author": user._id}, None).await {
                 Ok(_ok) => return Ok(Json(user.to())),
                 Err(e) => return Err(ApiError { status: Status::InternalServerError, message: e.to_string() })

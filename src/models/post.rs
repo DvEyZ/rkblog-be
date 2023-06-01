@@ -3,7 +3,7 @@ use rocket::{serde::{Serialize, Deserialize}, http::Status};
 
 use crate::errors::ApiError;
 
-use super::user::{UserReadModel, UserStoreModel};
+use super::user::{UserReadBriefModel, UserStoreModel};
 
 #[derive(Deserialize)]
 pub struct PostWriteModel {
@@ -23,7 +23,7 @@ pub struct PostReadFullModel {
     pub _id :String,
     pub title :String,
     pub content :String,
-    pub author :UserReadModel
+    pub author :UserReadBriefModel
 }
 
 #[derive(Serialize,Deserialize)]
@@ -84,7 +84,7 @@ impl PostStoreModel {
             _id: self._id.to_hex(),
             title: self.title,
             content: self.content,
-            author: author.to()
+            author: author.brief()
         })
     }
 }
